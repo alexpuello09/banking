@@ -12,25 +12,14 @@ type CustomerHandlers struct {
 }
 
 func (ch *CustomerHandlers) getAllCustomers(w http.ResponseWriter, r *http.Request) {
-	customers, err := ch.service.GetAllCustomers()
+	status := r.URL.Query().Get("status")
+
+	customers, err := ch.service.GetAllCustomers(status)
 	if err != nil {
 		writerResponse(w, err.Code, err.AsMessage())
 	} else {
 		writerResponse(w, http.StatusOK, customers)
 	}
-
-	//if r.Header.Get("Content-Type") != "application/json" {
-	//	w.Header().Add("Content-Type", "application/json")
-	//	err := json.NewEncoder(w).Encode(customers)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//} else {
-	//	err := json.NewEncoder(w).Encode(customers)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//}
 }
 
 func (ch *CustomerHandlers) getCustomer(w http.ResponseWriter, r *http.Request) {

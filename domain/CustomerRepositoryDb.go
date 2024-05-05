@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -12,8 +13,15 @@ type CustomerRepositoryDb struct {
 	client *sql.DB
 }
 
-func (d CustomerRepositoryDb) FindAll() ([]Customer, *errs.AppError) {
-	query := "SELECT customer_id, name, city, zipcode, date_of_birth, status from customers"
+func (d CustomerRepositoryDb) FindAll(status string) ([]Customer, *errs.AppError) {
+	query := "SELECT * from customers "
+
+	if strings.ToLower(status) == "active" {
+		query += "where status = 1;"
+	} else if strings.ToLower(status) == "inactive" {
+		query += "where status = 0;"
+	}
+
 	rows, err := d.client.Query(query)
 	if err != nil {
 		if err == sql.ErrNoRows {
