@@ -3,7 +3,6 @@ package app
 import (
 	"banking/domain"
 	"banking/service"
-	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -20,6 +19,5 @@ func Start() {
 	Router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomer).Methods("GET")
 
 	//Starting server
-	fmt.Println("Starting server")
 	log.Fatal(http.ListenAndServe("localhost:3000", Router))
 }
