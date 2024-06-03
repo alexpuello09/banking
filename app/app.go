@@ -19,5 +19,5 @@ func Start() {
 	Router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomer).Methods("GET")
 
 	//Starting server
-	log.Fatal(http.ListenAndServe("localhost:3000", Router))
+	log.Fatal(http.ListenAndServe("localhost:4000", Router))
 }
