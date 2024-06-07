@@ -8,7 +8,7 @@ import (
 )
 
 type CustomerService interface {
-	GetAllCustomers(string) ([]domain.Customer, *errs.AppError)
+	GetAllCustomers(string) ([]dto.CustomerResponse, *errs.AppError)
 	GetCustomer(string) (*dto.CustomerResponse, *errs.AppError)
 }
 
@@ -16,7 +16,7 @@ type DefaultCustomerService struct {
 	Repo domain.CustomerRepository
 }
 
-func (s DefaultCustomerService) GetAllCustomers(status string) ([]domain.Customer, *errs.AppError) {
+func (s DefaultCustomerService) GetAllCustomers(status string) ([]dto.CustomerResponse, *errs.AppError) {
 	if strings.ToLower(status) == "active" {
 		status = "1"
 	} else if strings.ToLower(status) == "inactive" {
@@ -24,7 +24,17 @@ func (s DefaultCustomerService) GetAllCustomers(status string) ([]domain.Custome
 	} else {
 		status = ""
 	}
-	return s.Repo.FindAll(status)
+
+	var customerSlideResult []dto.CustomerResponse
+	customerSlide, err := s.Repo.FindAll(status)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, customer := range customerSlide {
+		customerSlideResult = append(customerSlideResult, customer.ToDto())
+	}
+	return customerSlideResult, nil
 }
 
 func (s DefaultCustomerService) GetCustomer(id string) (*dto.CustomerResponse, *errs.AppError) {
