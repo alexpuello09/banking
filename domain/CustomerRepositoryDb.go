@@ -4,11 +4,8 @@ import (
 	"banking/errs"
 	"banking/logger"
 	"database/sql"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"os"
-	"time"
 )
 
 type CustomerRepositoryDb struct {
@@ -53,22 +50,6 @@ func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {
 	return &c, nil
 }
 
-func NewCustomerRepositoryDB() CustomerRepositoryDb {
-	dbUser := os.Getenv("DB_USERB")
-	dbPass := os.Getenv("DB_PASSB")
-	dbAddr := os.Getenv("DB_ADDRB")
-	dbName := os.Getenv("DB_NAMEB")
-	dbPort := os.Getenv("DB_PORTB")
-
-	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbAddr, dbPort, dbName)
-
-	client, err := sqlx.Open("mysql", dataSource)
-	if err != nil {
-		panic(err)
-	}
-	client.SetConnMaxLifetime(time.Minute * 3)
-	client.SetMaxOpenConns(10)
-	client.SetMaxIdleConns(10)
-
-	return CustomerRepositoryDb{client}
+func NewCustomerRepositoryDB(dbClient *sqlx.DB) CustomerRepositoryDb {
+	return CustomerRepositoryDb{dbClient}
 }
