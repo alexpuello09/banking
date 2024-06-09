@@ -4,20 +4,21 @@ import (
 	"banking/domain"
 	"banking/dto"
 	"banking/errs"
+	"banking/logger"
 	"time"
 )
 
 type TransactionService struct {
-	repo domain.TransactionRepository
+	repo domain.TransactionRepositoryDb
 }
 
 type ItransactionService interface {
-	makeTransaction(req dto.TransactionRequest) (*dto.TransactionResponse, *errs.AppError)
+	MakeTransaction(req dto.TransactionRequest) (*dto.TransactionResponse, *errs.AppError)
 }
 
-func (t TransactionService) makeTransaction(req dto.TransactionRequest) (*dto.TransactionResponse, *errs.AppError) {
+func (t TransactionService) MakeTransaction(req dto.TransactionRequest) (*dto.TransactionResponse, *errs.AppError) {
 	transactionObject := domain.Transaction{
-		TransactionId:   0,
+		TransactionId:   "",
 		AccountId:       req.AccountId,
 		Amount:          req.Amount,
 		TransactionType: req.TransactionType,
@@ -26,6 +27,7 @@ func (t TransactionService) makeTransaction(req dto.TransactionRequest) (*dto.Tr
 
 	newTransaction, err := t.repo.SaveTransaction(transactionObject)
 	if err != nil {
+		logger.Error("TransactionService - SaveTransaction Error" + err.Message)
 		return nil, err
 	}
 
@@ -36,6 +38,6 @@ func (t TransactionService) makeTransaction(req dto.TransactionRequest) (*dto.Tr
 	return &response, nil
 }
 
-func NewHelperTransaction(repo *domain.TransactionRepository) TransactionService {
+func NewHelperTransaction(repo domain.TransactionRepositoryDb) TransactionService {
 	return TransactionService{repo: repo}
 }
