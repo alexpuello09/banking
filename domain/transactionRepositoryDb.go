@@ -15,20 +15,16 @@ type TransactionRepositoryDb struct {
 func (t TransactionRepositoryDb) SaveTransaction(transaction Transaction) (*Transaction, *errs.AppError) {
 	dbConn := t.dbClient
 	var transId string
-	var AmountAccount float64
+	var AccountBalance float64
 	var sqlUpdateAccount string
 
 	switch strings.ToLower(transaction.TransactionType) {
 	case "withdrawal":
 		var Amount float64
 		query := "SELECT amount FROM accounts WHERE account_id = ?"
-		err1 := dbConn.Get(&Amount, query, transaction.AccountId)
-		if err1 != nil {
-			logger.Error("Error while getting account amount" + err1.Error())
-			return nil, errs.NewUnexpectedError("Error while validating account amount")
-		}
+		_ = dbConn.Get(&Amount, query, transaction.AccountId)
 		if Amount < transaction.Amount {
-			return nil, errs.NewUnexpectedError("Error Account amount is too little")
+			return nil, errs.NewUnexpectedError("There are not enough funds in your account, check your balance and try again.")
 		}
 		sqlUpdateAccount = "UPDATE accounts SET amount = amount - ? WHERE account_id = ?"
 
@@ -36,6 +32,7 @@ func (t TransactionRepositoryDb) SaveTransaction(transaction Transaction) (*Tran
 		sqlUpdateAccount = "UPDATE accounts SET amount = amount + ? WHERE account_id = ?"
 	}
 
+	//Insert transaction in the db
 	sqlxInsert := "INSERT INTO transactions (account_id, amount, transaction_type, transaction_date) VALUES  (?, ?, ?, ?)"
 	result, err := dbConn.Exec(sqlxInsert, transaction.AccountId, transaction.Amount, transaction.TransactionType, transaction.TransactionDate)
 	if err != nil {
@@ -51,13 +48,14 @@ func (t TransactionRepositoryDb) SaveTransaction(transaction Transaction) (*Tran
 		return nil, errs.NewUnexpectedError("Unexpected Error while updating account")
 	}
 
+	//Fetching the updated amount from the account
 	selectAccountId := "SELECT amount FROM accounts WHERE account_id = ?"
-	err3 := dbConn.Get(&AmountAccount, selectAccountId, transaction.AccountId)
+	err3 := dbConn.Get(&AccountBalance, selectAccountId, transaction.AccountId)
 	if err3 != nil {
 		return nil, errs.NewUnexpectedError("Error while Selecting amount from updated account")
 	}
 	transaction.TransactionId = transId
-	transaction.Amount = AmountAccount
+	transaction.Amount = AccountBalance
 	return &transaction, nil
 }
 

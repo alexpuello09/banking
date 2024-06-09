@@ -34,17 +34,17 @@ func (t TransactionService) MakeTransaction(req dto.TransactionRequest) (*dto.Tr
 		TransactionDate: time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	newTransaction, err3 := t.repo.SaveTransaction(transactionObject)
+	newTransactionObject, err3 := t.repo.SaveTransaction(transactionObject)
 	if err3 != nil {
 		logger.Error("TransactionService - SaveTransaction Error" + err3.Message)
 		return nil, err3
 	}
 
-	response := dto.TransactionResponse{
-		TransactionId: newTransaction.TransactionId,
-		Amount:        newTransaction.Amount,
+	result := dto.TransactionResponse{
+		TransactionId: newTransactionObject.TransactionId,
+		Amount:        newTransactionObject.Amount,
 	}
-	return &response, nil
+	return &result, nil
 }
 
 func NewHelperTransaction(repo domain.TransactionRepositoryDb) TransactionService {
