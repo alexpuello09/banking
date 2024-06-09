@@ -13,34 +13,31 @@ type TransactionRepositoryDb struct {
 }
 
 func (t TransactionRepositoryDb) SaveTransaction(transaction Transaction) (*Transaction, *errs.AppError) {
-	conn := t.dbClient
+	dbConn := t.dbClient
 	var transId string
 	var AmountAccount float64
 	var sqlUpdateAccount string
 
-	if strings.ToLower(transaction.TransactionType) == "withdrawal" {
-
+	switch strings.ToLower(transaction.TransactionType) {
+	case "withdrawal":
 		var Amount float64
 		query := "SELECT amount FROM accounts WHERE account_id = ?"
-		err1 := conn.Get(&Amount, query, transaction.AccountId)
+		err1 := dbConn.Get(&Amount, query, transaction.AccountId)
 		if err1 != nil {
 			logger.Error("Error while getting account amount" + err1.Error())
 			return nil, errs.NewUnexpectedError("Error while validating account amount")
 		}
-		if Amount >= transaction.Amount {
-			sqlUpdateAccount = "UPDATE accounts SET amount = amount - ? WHERE account_id = ?"
-		} else {
+		if Amount < transaction.Amount {
 			return nil, errs.NewUnexpectedError("Error Account amount is too little")
 		}
+		sqlUpdateAccount = "UPDATE accounts SET amount = amount - ? WHERE account_id = ?"
 
-	}
-
-	if strings.ToLower(transaction.TransactionType) == "deposit" {
+	case "deposit":
 		sqlUpdateAccount = "UPDATE accounts SET amount = amount + ? WHERE account_id = ?"
 	}
 
 	sqlxInsert := "INSERT INTO transactions (account_id, amount, transaction_type, transaction_date) VALUES  (?, ?, ?, ?)"
-	result, err := conn.Exec(sqlxInsert, transaction.AccountId, transaction.Amount, transaction.TransactionType, transaction.TransactionDate)
+	result, err := dbConn.Exec(sqlxInsert, transaction.AccountId, transaction.Amount, transaction.TransactionType, transaction.TransactionDate)
 	if err != nil {
 		logger.Error("Error while saving transaction: " + err.Error())
 		return nil, errs.NewNotFoundError("Error while Inserting New transaction")
@@ -48,13 +45,14 @@ func (t TransactionRepositoryDb) SaveTransaction(transaction Transaction) (*Tran
 	lastInsertedId, _ := result.LastInsertId()
 	transId = strconv.FormatInt(lastInsertedId, 10)
 
-	_, err2 := conn.Exec(sqlUpdateAccount, transaction.Amount, transaction.AccountId)
+	_, err2 := dbConn.Exec(sqlUpdateAccount, transaction.Amount, transaction.AccountId)
 	if err2 != nil {
 		logger.Error("Error while Updating Account: " + err2.Error())
 		return nil, errs.NewUnexpectedError("Unexpected Error while updating account")
 	}
+
 	selectAccountId := "SELECT amount FROM accounts WHERE account_id = ?"
-	err3 := conn.Get(&AmountAccount, selectAccountId, transaction.AccountId)
+	err3 := dbConn.Get(&AmountAccount, selectAccountId, transaction.AccountId)
 	if err3 != nil {
 		return nil, errs.NewUnexpectedError("Error while Selecting amount from updated account")
 	}

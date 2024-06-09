@@ -17,6 +17,15 @@ type ItransactionService interface {
 }
 
 func (t TransactionService) MakeTransaction(req dto.TransactionRequest) (*dto.TransactionResponse, *errs.AppError) {
+	err1 := req.ValidateTransactionType()
+	if err1 != nil {
+		return nil, err1
+	}
+	err2 := req.ValidateNegativeAmount()
+	if err2 != nil {
+		return nil, err2
+	}
+
 	transactionObject := domain.Transaction{
 		TransactionId:   "",
 		AccountId:       req.AccountId,
@@ -25,10 +34,10 @@ func (t TransactionService) MakeTransaction(req dto.TransactionRequest) (*dto.Tr
 		TransactionDate: time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	newTransaction, err := t.repo.SaveTransaction(transactionObject)
-	if err != nil {
-		logger.Error("TransactionService - SaveTransaction Error" + err.Message)
-		return nil, err
+	newTransaction, err3 := t.repo.SaveTransaction(transactionObject)
+	if err3 != nil {
+		logger.Error("TransactionService - SaveTransaction Error" + err3.Message)
+		return nil, err3
 	}
 
 	response := dto.TransactionResponse{
